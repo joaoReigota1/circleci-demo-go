@@ -1,4 +1,6 @@
-version: 2 
+orbs:
+  queue: eddiewebb/queue@2.2.1
+version: 2.1
 jobs: 
   build: 
     docker: 
@@ -15,7 +17,7 @@ jobs:
 
     steps: 
       - checkout 
-      - run: mkdir -p $TEST_RESULTS # create the test results directory
+      - run: mkdir -p $TEST_RESULTS 
 
       - restore_cache:
           keys:
@@ -35,7 +37,7 @@ jobs:
             PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
             gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
 
-      - run: make # pull and build dependencies for the project
+      - run: make 
 
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
@@ -62,13 +64,11 @@ jobs:
 
       - store_test_results: 
           path: /tmp/test-results
-orbs:
-  queue: eddiewebb/queue@volatile
 workflows:
-  version: 2
-  build-workflow:
+  build_deploy:
     jobs:
       - queue/block_workflow:
-          only-on-branch: master
           time: '10'
-      - build
+      - build:
+          requires:
+              - queue/block_workflow
